@@ -1,3 +1,4 @@
+using DecisionSystems.DataPrediction;
 using DecisionSystems.TSP;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -23,6 +24,7 @@ namespace DecisionSystems
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<TSPSpecService>();
+            services.AddSingleton<DataPredictionSpecService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

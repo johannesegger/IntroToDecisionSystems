@@ -1,0 +1,237 @@
+﻿@page "/data-prediction"
+@using DecisionSystems.DataPrediction
+@using DecisionSystems.DataPrediction.Predictor
+@inject DataPredictionSpecService DataPredictionSpecService
+
+<h1>Data prediction</h1>
+
+@if (specs == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <form class="mb-3" action="javascript:void(0)">
+        <div class="form-row">
+            <label>
+                Problem specification
+                <select class="form-control" @onchange="SpecSelected">
+                    @foreach (var spec in specs)
+                    {
+                        <option>@spec.Name</option>
+                    }
+                </select>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label>Data predictors</label>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Duration</th>
+                        <th><a href="https://en.wikipedia.org/wiki/Mean_squared_error" target="_blank">Mean squared error</a> (less is better)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var dataPredictor in dataPredictors)
+                    {
+                        <tr>
+                            <td>
+                                <label>
+                                    <span style="display: inline-block; height: 24px; width: 24px; background: @dataPredictor.Color">&nbsp;</span>
+                                    <input type="checkbox" value="" @bind="dataPredictor.IsSelected" />
+                                    @dataPredictor.Name
+                                </label>
+                            </td>
+
+                            @if (selectedSpec != null && dataPredictor.TryGetDataPredictionModel(out var dataPredictionModel))
+                            {
+                                var predictedDataPoints = dataPredictionModel.Model.Test(selectedSpec.TestData.Select(p => p.IndependentValue));
+                                var meanSquaredError = Utils.MeanSquaredError(selectedSpec.TestData, predictedDataPoints.Select(dataPoint => dataPoint.DependentValue));
+                                <td>@dataPredictionModel.TrainDuration</td>
+                                <td>@meanSquaredError.ToString("F2")</td>
+                            }
+                            else
+                            {
+                                <td>-</td>
+                                <td>-</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <button class="btn btn-primary" @onclick="Start" disabled=@(!dataPredictors.Any(dataPredictor => dataPredictor.IsSelected))>Start</button>
+    </form>
+
+    <BECanvas @ref="scene" Width="500" Height="500"></BECanvas>
+}
+
+@code {
+    private BECanvasComponent scene;
+
+    public class UIDataPredictionModel
+    {
+        public IDataPredictionModel Model { get; }
+        public TimeSpan TrainDuration { get; }
+
+        public UIDataPredictionModel(IDataPredictionModel model, TimeSpan trainDuration)
+        {
+            Model = model ?? throw new ArgumentNullException(nameof(model));
+            if (trainDuration < TimeSpan.Zero)
+            {
+                throw new ArgumentException("Train duration must be greater than zero.");
+            }
+            TrainDuration = trainDuration;
+        }
+    }
+
+    public class UIDataPredictor
+    {
+        private readonly IDataPredictor dataPredictor;
+        private UIDataPredictionModel dataPredictionModel;
+
+        public string Name { get; }
+        public bool IsSelected { get; set; }
+        public string Color { get; }
+
+        public UIDataPredictor(IDataPredictor dataPredictor, string name, string color)
+        {
+            this.dataPredictor = dataPredictor ?? throw new ArgumentNullException(nameof(dataPredictor));
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Color = color ?? throw new ArgumentNullException(nameof(color));
+        }
+
+        public void Train(IReadOnlyList<DataPoint> trainData, IReadOnlyList<DataPoint> testData)
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var dataPredictionModel = dataPredictor.Train(trainData);
+            watch.Stop();
+            this.dataPredictionModel = new UIDataPredictionModel(dataPredictionModel, watch.Elapsed);
+        }
+
+        public void Reset()
+        {
+            dataPredictionModel = default;
+        }
+
+        public bool TryGetDataPredictionModel(out UIDataPredictionModel dataPredictionModel)
+        {
+            dataPredictionModel = this.dataPredictionModel;
+            return dataPredictionModel != null;
+        }
+    }
+
+    private readonly IReadOnlyCollection<UIDataPredictor> dataPredictors = new UIDataPredictor[]
+    {
+    };
+
+    private DataPredictionSpec[] specs;
+
+    private DataPredictionSpec selectedSpec;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var serverSpecs = await DataPredictionSpecService.GetSpecs();
+        specs = serverSpecs
+            .Select(SerializableDataPredictionSpec.ToDomain)
+            .ToArray();
+        selectedSpec = specs.FirstOrDefault();
+    }
+
+    void SpecSelected(ChangeEventArgs e)
+    {
+        selectedSpec = specs.Single(spec => spec.Name == (string)e.Value);
+        foreach (var dataPredictor in dataPredictors)
+        {
+            dataPredictor.Reset();
+        }
+    }
+
+    async Task Start()
+    {
+        var trainTasks = dataPredictors
+            .Where(dataPredictor => dataPredictor.IsSelected)
+            .Select(dataPredictor => Task.Run(() => dataPredictor.Train(selectedSpec.TrainData, selectedSpec.TestData)));
+        await Task.WhenAll(trainTasks);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (scene == null)
+        {
+            return;
+        }
+
+        var context = await scene.CreateCanvas2DAsync();
+        await context.ClearRectAsync(0, 0, scene.Width, scene.Height);
+
+        if (selectedSpec == null)
+        {
+            return;
+        }
+
+        var minX = selectedSpec.Data.Min(dataPoint => dataPoint.IndependentValue);
+        var maxX = selectedSpec.Data.Max(dataPoint => dataPoint.IndependentValue);
+        var minY = selectedSpec.Data.Min(dataPoint => dataPoint.DependentValue);
+        var maxY = selectedSpec.Data.Max(dataPoint => dataPoint.DependentValue);
+
+        await context.BeginBatchAsync();
+
+        (double, double) getSceneCoordinates(DataPoint dataPoint)
+        {
+            var padding = 10;
+            var x = (double)(dataPoint.IndependentValue - minX) / (maxX - minX) * (scene.Width - 2 * padding) + padding;
+            var y = (1 - (double)(dataPoint.DependentValue - minY) / (maxY - minY)) * (scene.Height - 2 * padding) + padding;
+            return (x, y);
+        }
+
+        async Task drawPrediction(string color, IReadOnlyList<DataPoint> dataPoints)
+        {
+            await context.SetStrokeStyleAsync(color);
+            await context.BeginPathAsync();
+            var (startX, startY) = getSceneCoordinates(dataPoints[0]);
+            await context.MoveToAsync(startX, startY);
+            foreach (var dataPoint in dataPoints.Skip(1))
+            {
+                var (x, y) = getSceneCoordinates(dataPoint);
+                await context.LineToAsync(x, y);
+            }
+            await context.StrokeAsync();
+        }
+
+        var xRange = maxX - minX;
+        var numberOfPredictionPoints = 100;
+        var predictionPoints = Enumerable
+            .Range(0, numberOfPredictionPoints)
+            .Select(i => minX + ((double)i / (numberOfPredictionPoints - 1) * xRange))
+            .ToList();
+        foreach (var dataPredictor in dataPredictors)
+        {
+            if (dataPredictor.IsSelected && dataPredictor.TryGetDataPredictionModel(out var dataPredictionModel))
+            {
+                var predictedDataPoints = dataPredictionModel.Model.Test(predictionPoints);
+                await drawPrediction(dataPredictor.Color, predictedDataPoints);
+            }
+        }
+
+        async Task drawDataPoints(IEnumerable<DataPoint> dataPoints, string color)
+        {
+            await context.SetFillStyleAsync(color);
+            foreach (var dataPoint in dataPoints)
+            {
+                await context.BeginPathAsync();
+                var (x, y) = getSceneCoordinates(dataPoint);
+                await context.ArcAsync(x, y, 2, 0, 2 * Math.PI);
+                await context.FillAsync();
+            }
+        }
+        await drawDataPoints(selectedSpec.TrainData, "blue");
+        await drawDataPoints(selectedSpec.TestData, "red");
+
+        await context.EndBatchAsync();
+    }
+}
