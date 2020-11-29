@@ -13,7 +13,7 @@ namespace DecisionSystems.TSP
             return Math.Sqrt(dx * dx + dy * dy);
         }
 
-        public static double GetDistance(IReadOnlyCollection<int> solution, IReadOnlyList<Location> cities)
+        public static double GetDistance(this IReadOnlyList<Location> cities, IReadOnlyCollection<int> solution)
         {
             return solution
                 .Concat(new[] { solution.First() })

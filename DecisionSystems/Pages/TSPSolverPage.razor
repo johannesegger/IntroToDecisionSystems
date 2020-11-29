@@ -11,7 +11,7 @@
 }
 else
 {
-    var optimalTourDistance = Utils.GetDistance(selectedTSPSpec.OptimalTour, selectedTSPSpec.Cities);
+    var optimalTourDistance = selectedTSPSpec.Cities.GetDistance(selectedTSPSpec.OptimalTour);
 
     <form class="mb-3" action="javascript:void(0)">
         <div class="form-row">

@@ -10,7 +10,7 @@ namespace DecisionSystems.TSP.Solver
             var baseTour = Enumerable.Range(1, cities.Count).ToArray();
             List<int[]> tours = new List<int[]>();
             CalculatePermutations(baseTour, 1, tours);
-            return tours.MinBy(tour => Utils.GetDistance(tour, cities)).ToList();
+            return tours.MinBy(cities.GetDistance).ToList();
         }
 
         private static void CalculatePermutations(int[] data, int startIndex, List<int[]> permutations)

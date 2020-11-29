@@ -20,7 +20,7 @@ namespace DecisionSystems.TSP.Solver
                         .Shuffle()
                         .ToList()
                 )
-                .MinBy(solution => Utils.GetDistance(solution, cities));
+                .MinBy(cities.GetDistance);
         }
     }
 }
