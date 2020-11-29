@@ -54,4 +54,11 @@ namespace DecisionSystems
             return items.Best(selector, (a, b) => a.CompareTo(b) > 0);
         }
     }
+    public static class ArrayExtensions
+    {
+        public static void Swap<T>(this IList<T> list, int idx1, int idx2)
+        {
+            (list[idx1], list[idx2]) = (list[idx2], list[idx1]);
+        }
+    }
 }

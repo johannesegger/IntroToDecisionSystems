@@ -40,18 +40,11 @@ namespace DecisionSystems.TSP.Solver
                 // and then calculate permutations of elements with index > startIndex
                 for (int i = startIndex; i < data.Length; i++)
                 {
-                    Swap(data, startIndex, i);
+                    data.Swap(startIndex, i);
                     CalculatePermutations(data, startIndex + 1, permutations);
-                    Swap(data, startIndex, i);
+                    data.Swap(startIndex, i);
                 }
             }
-        }
-
-        private static void Swap(int[] data, int a, int b)
-        {
-            int temp = data[a];
-            data[a] = data[b];
-            data[b] = temp;
         }
     }
 }
