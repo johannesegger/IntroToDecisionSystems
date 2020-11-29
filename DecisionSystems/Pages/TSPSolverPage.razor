@@ -119,9 +119,20 @@ else
             var watch = Stopwatch.StartNew();
             var tour = solver.Solve(cities);
             var duration = watch.Elapsed;
+
+            if (tour == null)
+            {
+                throw new Exception($"Error in solver {Name}: Solver returned null.");
+            }
+
+            if (tour.Any(index => index < 1 || index > cities.Count))
+            {
+                throw new Exception($"Error in solver {Name}: Only indices from 1 to {cities.Count} are allowed, got {string.Join(", ", tour)}.");
+            }
+
             if (tour.Distinct().Count() != cities.Count)
             {
-                Console.WriteLine($"WARNING: Solver {solver} returned invalid solution.");
+                throw new Exception($"Error in solver {Name}: Every city index must be included exactly once, got {string.Join(", ", tour)}.");
             }
 
             this.solution = new UITSPSolution(tour, duration);
