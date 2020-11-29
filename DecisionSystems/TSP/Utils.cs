@@ -13,12 +13,16 @@ namespace DecisionSystems.TSP
             return Math.Sqrt(dx * dx + dy * dy);
         }
 
+        public static double GetDistance(this IReadOnlyList<Location> cities, int idx1, int idx2)
+        {
+            return GetDistance(cities[idx1 - 1], cities[idx2 - 1]);
+        }
+
         public static double GetDistance(this IReadOnlyList<Location> cities, IReadOnlyCollection<int> solution)
         {
             return solution
                 .Concat(new[] { solution.First() })
-                .Select(index => cities[index - 1])
-                .Pairwise(GetDistance)
+                .Pairwise(cities.GetDistance)
                 .Sum();
         }
     }
