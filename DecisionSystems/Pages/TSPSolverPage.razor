@@ -39,6 +39,7 @@ else
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Duration</th>
                         <th>Best solution</th>
                         <th>Difference to optimal solution</th>
                     </tr>
@@ -57,12 +58,14 @@ else
 
                             @if (solver.TryGetSolution(out var solution))
                             {
-                                var distance = Utils.GetDistance(solution, selectedTSPSpec.Cities);
+                                <td>@solution.Duration</td>
+                                var distance = selectedTSPSpec.Cities.GetDistance(solution.Tour);
                                 <td>@distance.ToString("F2")</td>
                                 <td>@((distance / optimalTourDistance).ToString("P0"))</td>
                             }
                             else
                             {
+                                <td>-</td>
                                 <td>-</td>
                                 <td>-</td>
                             }
@@ -79,10 +82,26 @@ else
 }
 
 @code {
+    public class UITSPSolution
+    {
+        public IReadOnlyList<int> Tour { get; }
+        public TimeSpan Duration { get; }
+
+        public UITSPSolution(IReadOnlyList<int> solution, TimeSpan duration)
+        {
+            Tour = solution ?? throw new ArgumentNullException(nameof(solution));
+            if (duration < TimeSpan.Zero)
+            {
+                throw new ArgumentException("Duration must be greater than zero.");
+            }
+            Duration = duration;
+        }
+    }
+
     public class UITSPSolver
     {
         private readonly ITSPSolver solver;
-        private IReadOnlyList<int> solution;
+        private UITSPSolution solution;
 
         public string Name { get; }
         public bool IsSelected { get; set; }
@@ -97,22 +116,26 @@ else
 
         public void Solve(IReadOnlyList<Location> cities)
         {
-            solution = solver.Solve(cities);
-            if (solution.Distinct().Count() != cities.Count)
+            var watch = Stopwatch.StartNew();
+            var tour = solver.Solve(cities);
+            var duration = watch.Elapsed;
+            if (tour.Distinct().Count() != cities.Count)
             {
                 Console.WriteLine($"WARNING: Solver {solver} returned invalid solution.");
             }
+
+            this.solution = new UITSPSolution(tour, duration);
         }
 
         public void Reset()
         {
-            solution = null;
+            solution = default;
         }
 
-        public bool TryGetSolution(out IReadOnlyList<int> solution)
+        public bool TryGetSolution(out UITSPSolution solution)
         {
             solution = this.solution;
-            return solution != null;
+            return solution != default;
         }
     }
 
@@ -210,7 +233,7 @@ else
         {
             if (solver.IsSelected && solver.TryGetSolution(out var solution))
             {
-                await drawTour(solver.Color, solution);
+                await drawTour(solver.Color, solution.Tour);
             }
         }
 
