@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace DecisionSystems.TSP.Solver
@@ -8,24 +7,10 @@ namespace DecisionSystems.TSP.Solver
     {
         public List<int> Solve(IReadOnlyList<Location> cities)
         {
-            var minLength = double.MaxValue;
             var baseTour = Enumerable.Range(1, cities.Count).ToArray();
             List<int[]> tours = new List<int[]>();
             CalculatePermutations(baseTour, 1, tours);
-
-            List<int> solution = null;
-            foreach (var tour in tours)
-            {
-                var tourList = tour.ToList();
-                var length = Utils.GetDistance(tourList, cities);
-                if (length < minLength)
-                {
-                    minLength = length;
-                    solution = tourList;
-                }
-            }
-            Debug.Assert(solution != null);
-            return solution;
+            return tours.MinBy(tour => Utils.GetDistance(tour, cities)).ToList();
         }
 
         private static void CalculatePermutations(int[] data, int startIndex, List<int[]> permutations)
