@@ -161,7 +161,8 @@ else
         new UITSPSolver(new RandomTSPSolver(1000), "Random (1000 iterations)", "darkslateblue"),
         new UITSPSolver(new BacktrackingTSPSolver(), "Backtracking", "gold"),
         new UITSPSolver(new BranchAndBoundTSPSolver(), "Branch & Bound", "forestgreen"),
-        new UITSPSolver(new NearestNeighborConstructionTSPSolver(), "Nearest neighbor construction", "lightskyblue")
+        new UITSPSolver(new NearestNeighborConstructionTSPSolver(), "Nearest neighbor construction", "lightskyblue"),
+        new UITSPSolver(new NearestNeighborConstructionWithOptimalStartTSPSolver(), "Nearest neighbor construction with optimal start", "dodgerblue")
     };
 
     protected override async Task OnInitializedAsync()
