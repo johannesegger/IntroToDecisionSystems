@@ -15,12 +15,10 @@ namespace DecisionSystems
         {
             var array = items.ToArray();
             var random = new Random();
-            for(var i = 0; i < array.Length - 1; i++)
+            for (var i = 0; i < array.Length - 1; i++)
             {
                 var j = random.Next(i, array.Length);
-                var tmp = array[i];
-                array[i] = array[j];
-                array[j] = tmp;
+                array.Swap(i, j);
             }
             return array;
         }
