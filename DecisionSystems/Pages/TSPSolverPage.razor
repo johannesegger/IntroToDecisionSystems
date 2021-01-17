@@ -162,7 +162,8 @@ else
         new UITSPSolver(new BacktrackingTSPSolver(), "Backtracking", "gold"),
         new UITSPSolver(new BranchAndBoundTSPSolver(), "Branch & Bound", "forestgreen"),
         new UITSPSolver(new NearestNeighborConstructionTSPSolver(), "Nearest neighbor construction", "lightskyblue"),
-        new UITSPSolver(new NearestNeighborConstructionWithOptimalStartTSPSolver(), "Nearest neighbor construction with optimal start", "dodgerblue")
+        new UITSPSolver(new NearestNeighborConstructionWithOptimalStartTSPSolver(), "Nearest neighbor construction with optimal start", "dodgerblue"),
+        new UITSPSolver(new GenericAlgorithmTSPSolver(1000, 1000), "Genetic algorithm (Population size = 1000, Iterations = 1000)", "black")
     };
 
     protected override async Task OnInitializedAsync()
