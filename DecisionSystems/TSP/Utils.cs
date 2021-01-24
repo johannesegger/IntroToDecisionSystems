@@ -18,12 +18,15 @@ namespace DecisionSystems.TSP
             return GetDistance(cities[idx1 - 1], cities[idx2 - 1]);
         }
 
-        public static double GetDistance(this IReadOnlyList<Location> cities, IReadOnlyCollection<int> solution)
+        public static double GetDistance(this IReadOnlyList<Location> cities, IReadOnlyList<int> solution)
         {
-            return solution
-                .Concat(new[] { solution.First() })
-                .Pairwise(cities.GetDistance)
-                .Sum();
+            var result = 0.0;
+            for (int i = 0; i < solution.Count - 1; i++)
+            {
+                result += cities.GetDistance(solution[i], solution[i + 1]);
+            }
+            result += cities.GetDistance(solution[^1], solution[0]);
+            return result;
         }
     }
 }
