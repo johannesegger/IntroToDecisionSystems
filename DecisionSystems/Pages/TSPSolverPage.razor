@@ -163,7 +163,8 @@ else
         new UITSPSolver(new BranchAndBoundTSPSolver(), "Branch & Bound", "forestgreen"),
         new UITSPSolver(new NearestNeighborConstructionTSPSolver(), "Nearest neighbor construction", "lightskyblue"),
         new UITSPSolver(new NearestNeighborConstructionWithOptimalStartTSPSolver(), "Nearest neighbor construction with optimal start", "dodgerblue"),
-        new UITSPSolver(new GenericAlgorithmTSPSolver(1000, 1000), "Genetic algorithm (Population size = 1000, Iterations = 1000)", "black")
+        new UITSPSolver(new GeneticAlgorithmTSPSolverParallel(1000, 1000), "Genetic algorithm (Population size = 1000, Iterations = 1000)", "brown"),
+        new UITSPSolver(new GeneticAlgorithmTSPSolverParallel(10000, 10000), "Genetic algorithm (Population size = 10000, Iterations = 10000)", "black")
     };
 
     protected override async Task OnInitializedAsync()

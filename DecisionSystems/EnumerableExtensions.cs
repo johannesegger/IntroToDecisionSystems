@@ -11,16 +11,20 @@ namespace DecisionSystems
             return items.Zip(items.Skip(1), combine);
         }
 
-        public static T[] Shuffle<T>(this IEnumerable<T> items)
+        public static T[] Shuffle<T>(this IEnumerable<T> items, Random random)
         {
             var array = items.ToArray();
-            var random = new Random();
             for (var i = 0; i < array.Length - 1; i++)
             {
                 var j = random.Next(i, array.Length);
                 array.Swap(i, j);
             }
             return array;
+        }
+
+        public static T[] Shuffle<T>(this IEnumerable<T> items)
+        {
+            return items.Shuffle(new Random());
         }
 
         public static T Best<T, TCompare>(this IEnumerable<T> items, Func<T, TCompare> selector, Func<TCompare, TCompare, bool> isFirstBetter) where TCompare : IComparable<TCompare>
