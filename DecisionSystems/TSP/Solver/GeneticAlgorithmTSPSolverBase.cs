@@ -77,20 +77,29 @@ namespace DecisionSystems.TSP.Solver
         {
             var startIndex = generator.Next(parent1Tour.Length);
             var endIndex = generator.Next(parent1Tour.Length);
-            if (startIndex > endIndex)
+            if (startIndex < endIndex)
             {
-                (startIndex, endIndex) = (endIndex, startIndex);
-                (parent1Tour, parent2Tour) = (parent2Tour, parent1Tour);
+                var parent1SubTour = parent1Tour[startIndex..endIndex];
+                var parent2RemainingTour = parent2Tour.Except(parent1SubTour).ToArray();
+                var parent2SubTour1 = parent2RemainingTour[..startIndex];
+                var parent2SubTour2 = parent2RemainingTour[startIndex..];
+                var childTour = new int[parent1Tour.Length];
+                parent2SubTour1.CopyTo(childTour, 0);
+                parent1SubTour.CopyTo(childTour, parent2SubTour1.Length);
+                parent2SubTour2.CopyTo(childTour, parent2SubTour1.Length + parent1SubTour.Length);
+                return childTour;
             }
-            var parent1SubTour = parent1Tour[startIndex..endIndex];
-            var parent2RemainingTour = parent2Tour.Except(parent1SubTour).ToArray();
-            var parent2SubTour1 = parent2RemainingTour[..startIndex];
-            var parent2SubTour2 = parent2RemainingTour[startIndex..];
-            var childTour = new int[parent1Tour.Length];
-            parent2SubTour1.CopyTo(childTour, 0);
-            parent1SubTour.CopyTo(childTour, parent2SubTour1.Length);
-            parent2SubTour2.CopyTo(childTour, parent2SubTour1.Length + parent1SubTour.Length);
-            return childTour;
+            else
+            {
+                var parent1SubTour1 = parent1Tour[..endIndex];
+                var parent1SubTour2 = parent1Tour[startIndex..];
+                var parent2RemainingTour = parent2Tour.Except(parent1SubTour1).Except(parent1SubTour2).ToArray();
+                var childTour = new int[parent1Tour.Length];
+                parent1SubTour1.CopyTo(childTour, 0);
+                parent2RemainingTour.CopyTo(childTour, parent1SubTour1.Length);
+                parent1SubTour2.CopyTo(childTour, parent1SubTour1.Length + parent2RemainingTour.Length);
+                return childTour;
+            }
         }
 
         private void TwoOptChange(int[] child, double mutationProbability)
